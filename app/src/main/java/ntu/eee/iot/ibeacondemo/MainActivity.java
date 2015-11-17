@@ -1,36 +1,45 @@
 package ntu.eee.iot.ibeacondemo;
 
-import android.support.v7.app.AppCompatActivity;
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.util.Log;
+import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity
+import ntu.eee.iot.ibeacondemo.api.BeaconActivity;
+import ntu.eee.iot.ibeacondemo.service.ScanBluetoothService;
+
+public class MainActivity extends BeaconActivity
 {
 
+    private String TAG = "MainActivity";
+
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    private void LogE(String str) {
+        Log.e(TAG,str);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        int id = item.getItemId();
-        if (id == R.id.action_settings)
-        {
-            return true;
-        }
+    public void changeFloor(int floor) {
+        TextView tx_floor = (TextView)findViewById(R.id.TX_FLOOR);
+        tx_floor.setText(floor+" level");
+    }
 
-        return super.onOptionsItemSelected(item);
+    @Override
+    public void showPosition(double lat, double lng) {
+
+    }
+
+    @Override
+    public void showLog(String msg) {
+        TextView tx_log = (TextView)findViewById(R.id.TX_LOG);
+        tx_log.setText(msg);
     }
 }

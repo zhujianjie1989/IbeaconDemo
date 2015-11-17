@@ -1,6 +1,6 @@
 package ntu.eee.iot.ibeacondemo.pojo;
 
-import java.util.HashMap;
+import java.util.Date;
 
 public class Beacon {
 	public String 	id;
@@ -15,6 +15,8 @@ public class Beacon {
 	public int 		type;
 	public int 		pipeNum;
 	public long 	updateTime;
+	public double   latitude;
+	public double 	longitude;
 
 	private int pos = 0;
 	private int length = 3 ;
@@ -29,9 +31,8 @@ public class Beacon {
 		}
 	}
 
-	public Beacon(String ID, String UUID,
-				  String Mac, String Major,
-				  String Minor, int rssi, int TxPower)
+	public Beacon(String ID, String UUID, String Mac,
+				  String Major, String Minor, int rssi, int TxPower)
 	{
 
 		this.id= ID;
@@ -52,5 +53,15 @@ public class Beacon {
 			sum+=rssis[i];
 		}
 		this.rssi = sum/length;
+	}
+	public  String  toString()
+	{
+		return id+"\t"+mac+"\t"+major+"\t"+minor+"\t"+latitude+"\t"+longitude+"\t"+floor;
+	}
+
+	public void updateBeaconStatu(Beacon beacon)
+	{
+		this.setRssi(beacon.rssi);
+		this.updateTime = new Date().getTime();
 	}
 }

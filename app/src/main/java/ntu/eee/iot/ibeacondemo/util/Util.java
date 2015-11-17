@@ -1,6 +1,14 @@
 package ntu.eee.iot.ibeacondemo.util;
 
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
+import android.util.Log;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ntu.eee.iot.ibeacondemo.pojo.Beacon;
 
@@ -10,7 +18,9 @@ import ntu.eee.iot.ibeacondemo.pojo.Beacon;
 public class Util
 {
     public static final String BEACON_SCAN_ACTION = "ntu.eee.iot.ibeacondemo.BeaconScanAction";
+    public static final String BEACON_CHANGE_FLOOR_ACTION = "ntu.eee.iot.ibeacondemo.ChangeFloorAction";
     public static final char[] hexArray = "0123456789ABCDEF".toCharArray();
+
     public static Beacon paraScan(String mac, int rssi, byte[] scanRecord)
     {
         int startByte = 2;
@@ -58,5 +68,60 @@ public class Util
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+
+    public static List<Beacon> readConf(Context context) {
+
+        String db_name = "BLEdevice.db";
+        DatabaseContext dbContext = new DatabaseContext(context);
+        SQLiteHelper helper = new SQLiteHelper(dbContext,db_name);
+
+        List<Beacon> beacons = helper.selectAllBeacon();
+        for (Beacon beacon : beacons) {
+            LogE(beacon.toString());
+        }
+        return beacons;
+    }
+
+    private static String TAG = "MainActivity  Util";
+
+    private static void LogE(String str)
+    {
+        Log.e(TAG,str);
+    }
+
+
+    public static  String path = "/sdcard/sensorInfo.txt";
+
+    public static List<Beacon> ReadConfigFile2() {
+
+        List<Beacon> beacons = new ArrayList();
+        try {
+            FileReader fileReader = new FileReader(path);
+            BufferedReader br = new BufferedReader(fileReader);
+
+            String data = br.readLine();
+            while( data != null ) {
+                Beacon sensor = new Beacon();
+                String[] info = data.split(",");
+
+                sensor.id = info[0];
+                sensor.major= info[1];
+                sensor.minor= info[2];
+                sensor.latitude = Double.parseDouble(info[3]);
+                sensor.longitude = Double.parseDouble(info[4]);
+                sensor.floor =Integer.parseInt(info[5]);
+                sensor.max_rssi = Integer.parseInt(info[6]);
+                beacons.add(sensor);
+                Log.e("ReadConfigFile ", sensor.toString());
+                data = br.readLine();
+            }
+
+            br.close();
+        }
+        catch (IOException e) {e.printStackTrace();}
+
+        return  beacons;
     }
 }
