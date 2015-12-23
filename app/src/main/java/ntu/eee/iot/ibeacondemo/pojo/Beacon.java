@@ -19,7 +19,7 @@ public class Beacon {
 	public double 	longitude;
 
 	private int pos = 0;
-	private int length = 3 ;
+	private int length = 2 ;
 	private int[] rssis = new int[length];
 
 
@@ -57,6 +57,11 @@ public class Beacon {
 	public  String  toString()
 	{
 		return id+"\t"+mac+"\t"+major+"\t"+minor+"\t"+latitude+"\t"+longitude+"\t"+floor;
+	}
+
+	public  String  toString1()
+	{
+		return "major = "+major+" minor = "+minor+"  rssi = "+(rssi-max_rssi);
 	}
 
 	public void updateBeaconStatu(Beacon beacon)

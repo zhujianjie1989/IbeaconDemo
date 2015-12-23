@@ -6,12 +6,16 @@ import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import ntu.eee.iot.ibeacondemo.api.BeaconActivity;
+import ntu.eee.iot.ibeacondemo.api.BeaconLocalizationAPI;
 import ntu.eee.iot.ibeacondemo.pojo.Beacon;
 import ntu.eee.iot.ibeacondemo.util.Util;
 
@@ -21,12 +25,16 @@ import ntu.eee.iot.ibeacondemo.util.Util;
 public class BeacondataCotrol
 {
     private Map<String,Beacon> beaconMap;
-    private Context context ;
+    public Map<String,Beacon> beaconScanMap;
+    private BeaconLocalizationAPI api ;
+    private Date Scan_UpdateTime;
+    public static enum BeaconType {OUTDOOR,INDOOR,STAIRS,ELEVATOR};
 
-    public BeacondataCotrol(Context context)
+    public BeacondataCotrol(BeaconLocalizationAPI Bapi)
     {
-        this.context= context;
+        this.api= Bapi;
         beaconMap =  new HashMap();
+        beaconScanMap =  new HashMap();
     }
 
     public void putBeacon(Beacon beacon)
@@ -42,42 +50,95 @@ public class BeacondataCotrol
         }
     }
 
-    public void updataBeaconRssi(Beacon beacon)
-    {
-        beaconMap.get(beacon.id).rssi = beacon.rssi;
-    }
-
     private int curr_floor = -1;
     public void dealBeacon(Beacon beacon)
     {
-        Intent intent1 = new Intent();
-        intent1.setAction(Util.BEACON_CHANGE_FLOOR_ACTION);
-        this.context.sendBroadcast(intent1);
-
-        Log.e("CHANGE_FLOOR_ACTION", "floor = " + curr_floor);
         if (beaconMap.containsKey(beacon.id))
         {
-           // Log.e("CHANGE_FLOOR_ACTION", "beaconMap.containsKey(beacon.id)"+beaconMap.containsKey(beacon.id));
             Beacon sensor =  beaconMap.get(beacon.id);
             sensor.updateBeaconStatu(beacon);
+            Log.e("CHANGE_FLOOR_ACTION", "floor = " + curr_floor);
+
+
+            if ((sensor.rssi - sensor.max_rssi) > -27)
+            {
+                //添加到当前可扫描到的beacon列表
+                beaconScanMap.put(sensor.id,sensor);
+                //更新扫描到beacon的时间
+                Scan_UpdateTime = new Date();
+            }
 
             //判断是否楼成切换
-            if (curr_floor != sensor.floor /*&& (sensor.rssi - sensor.max_rssi) > -27*/ )
+            if (curr_floor != sensor.floor && (sensor.rssi - sensor.max_rssi) > -27 )
             {
                 curr_floor = sensor.floor;
-              //  Log.e("CHANGE_FLOOR_ACTION", "floor = " + curr_floor);
-                Intent intent = new Intent();
-                intent.setAction(Util.BEACON_CHANGE_FLOOR_ACTION);
-
-                Bundle bundle = new Bundle();
-                bundle.putInt("floor", curr_floor);
-                intent.putExtras(bundle);
-
-                context.sendBroadcast(intent);
-              //  Log.e("CHANGE_FLOOR_ACTION", "floor = " + curr_floor);
+                api.nofityChangeFloor(curr_floor);
             }
         }
 
+    }
+
+    public void cleanValidBeacon()
+    {
+        Date now = new Date();
+
+        //用一个时间段内扫描到的beacon计算
+        Iterator<String> iter = beaconScanMap.keySet().iterator();
+        List<Beacon> removeList = new ArrayList<>();
+        while (iter.hasNext())
+        {
+            String key =  iter.next();
+            Beacon sensor = beaconScanMap.get(key);
+            if (now.getTime() - sensor.updateTime > 2000)
+            {
+                removeList.add(sensor);
+            }
+        }
+
+        for (int index = 0 ; index < removeList.size();index++)
+        {
+            Beacon beacon = removeList.get(index);
+            beaconScanMap.remove(beacon.id);
+        }
+
+        removeList =null;
+    }
+
+    public Beacon getMaxBeacon(){
+        int max = -10000;
+        Beacon maxBeacon = null;
+        Iterator<String> iter = beaconScanMap.keySet().iterator();
+        List<Beacon> removeList = new ArrayList<>();
+        while (iter.hasNext())
+        {
+            String key =  iter.next();
+            Beacon sensor = beaconScanMap.get(key);
+            if (sensor.rssi >max)
+            {
+                maxBeacon = sensor;
+                max = sensor.rssi;
+            }
+        }
+
+        return  maxBeacon;
+    }
+
+    public String getALL(){
+        String str = "";
+        Iterator<String> iter = beaconScanMap.keySet().iterator();
+        List<Beacon> removeList = new ArrayList<>();
+        while (iter.hasNext())
+        {
+            String key =  iter.next();
+            Beacon sensor = beaconScanMap.get(key);
+            str += sensor.toString1()+"\n";
+        }
+        return  str;
+    }
+
+    public int getSize()
+    {
+        return  beaconScanMap.size();
     }
 
 
